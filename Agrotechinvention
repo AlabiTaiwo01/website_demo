@@ -1,0 +1,59 @@
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { ShoppingBasket, TrendingUp, Users, Package } from 'lucide-react';
+import StatCard from '@/components/dashboard/StatCard';
+import QuickActions from '@/components/dashboard/QuickActions';
+import RecentOrders from '@/components/dashboard/RecentOrders';
+import InvestmentCharts from '@/components/dashboard/InvestmentCharts';
+
+export default function Dashboard() {
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => base44.entities.Product.list(),
+  });
+  const { data: experts = [] } = useQuery({
+    queryKey: ['experts'],
+    queryFn: () => base44.entities.Expert.list(),
+  });
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => base44.entities.InvestmentProject.list(),
+  });
+  const { data: orders = [] } = useQuery({
+    queryKey: ['orders'],
+    queryFn: () => base44.entities.Order.list('-created_date', 10),
+  });
+  const { data: investments = [] } = useQuery({
+    queryKey: ['investments'],
+    queryFn: () => base44.entities.Investment.list(),
+  });
+
+  const totalInvested = investments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+  return (
+    <div className="space-y-6 max-w-7xl">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Welcome back to AgroTech Pro</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Products" value={products.length} subtitle="Available listings" icon={ShoppingBasket} accent="green" />
+        <StatCard title="Experts" value={experts.length} subtitle="Ready to consult" icon={Users} accent="amber" />
+        <StatCard title="Projects" value={projects.filter(p => p.status === 'open').length} subtitle="Open for investment" icon={TrendingUp} accent="blue" />
+        <StatCard title="Invested" value={`₦${totalInvested.toLocaleString()}`} subtitle={`${investments.length} investments`} icon={Package} accent="green" />
+      </div>
+
+      {/* Content Grid */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <QuickActions />
+        <RecentOrders orders={orders} />
+      </div>
+
+      {/* Investment Charts */}
+      <InvestmentCharts investments={investments} />
+    </div>
+  );
+}
